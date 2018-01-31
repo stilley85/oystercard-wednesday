@@ -5,7 +5,7 @@ describe Oystercard do
   max_balance = Oystercard::MAX_BALANCE
   minimum_fare = Oystercard::MIN_FARE
 
-  let(:station) { double("victoria") }
+  let(:station) { double :station }
 
   context '#initialize' do
 
@@ -21,6 +21,10 @@ describe Oystercard do
       expect(subject.entry_station).to eq nil
     end
 
+    it "initializes with an empty journey history" do
+      expect(subject.journeys).to eq([])
+    end
+
   end
 
   context '#top_up' do
@@ -31,7 +35,7 @@ describe Oystercard do
 
     it 'prevents top up if that would exceed maximum_balance' do
       subject.top_up(max_balance)
-      expect { subject.top_up(1) }.to raise_error("Can not have more than £#{max_balance}")
+      expect { subject.top_up(1) }.to raise_error("Cannot have more than £#{max_balance}")
     end
 
   end
@@ -53,24 +57,39 @@ describe Oystercard do
         expect(subject.entry_station).to eq(station)
       end
 
+      it 'sets exit station to nil when touching in' do
+        subject.touch_out(station)
+        subject.touch_in(station)
+        expect(subject.exit_station).to eq(nil)
+      end
+
     end
 
     context "#touch_out" do
 
+      before(:each) do
+        subject.touch_out(station)
+      end
+
       it "in_journey? changed to false when touch_out is called" do
-        subject.touch_out
         expect(subject.in_journey?).to eq(false)
       end
 
       it "deducts minimum fare from balance when touching out" do
-        subject.touch_out
-        expect{ subject.touch_out }.to change{ subject.balance }.by(-minimum_fare)
+        expect{ subject.touch_out(station) }.to change{ subject.balance }.by(-minimum_fare)
       end
 
-      it 'touches out and sets entry_station to nil' do
-        subject.touch_out
+      it 'sets entry station to nil when touching out' do
         expect(subject.entry_station).to eq(nil)
       end
+
+      it "remembers the exit station when touching out" do
+        expect(subject.exit_station).to eq(station)
+      end
+
+    context "#save_journey" do
+      it { is_expected.to respond_to(:save_journey)}
+    end
 
     end
 
