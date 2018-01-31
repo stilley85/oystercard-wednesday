@@ -5,7 +5,9 @@ describe Oystercard do
   max_balance = Oystercard::MAX_BALANCE
   minimum_fare = Oystercard::MIN_FARE
 
-  let(:station) { double :station }
+  let(:entry_station) { double :entry_station }
+  let(:exit_station) { double :exit_station }
+  let(:journey) { {entry_station: entry_station, exit_station: exit_station} }
 
   context '#initialize' do
 
@@ -22,7 +24,7 @@ describe Oystercard do
     end
 
     it "initializes with an empty journey history" do
-      expect(subject.journeys).to eq([])
+      expect(subject.journeys).to be_empty
     end
 
   end
@@ -44,7 +46,7 @@ describe Oystercard do
 
     before(:each) do
       subject.top_up(max_balance)
-      subject.touch_in(station)
+      subject.touch_in(entry_station)
     end
 
     context "#touch_in" do
@@ -54,12 +56,12 @@ describe Oystercard do
       end
 
       it 'touches in and remembers entry station' do
-        expect(subject.entry_station).to eq(station)
+        expect(subject.entry_station).to eq(entry_station)
       end
 
       it 'sets exit station to nil when touching in' do
-        subject.touch_out(station)
-        subject.touch_in(station)
+        subject.touch_out(exit_station)
+        subject.touch_in(entry_station)
         expect(subject.exit_station).to eq(nil)
       end
 
@@ -68,7 +70,7 @@ describe Oystercard do
     context "#touch_out" do
 
       before(:each) do
-        subject.touch_out(station)
+        subject.touch_out(exit_station)
       end
 
       it "in_journey? changed to false when touch_out is called" do
@@ -76,7 +78,7 @@ describe Oystercard do
       end
 
       it "deducts minimum fare from balance when touching out" do
-        expect{ subject.touch_out(station) }.to change{ subject.balance }.by(-minimum_fare)
+        expect{ subject.touch_out(exit_station) }.to change{ subject.balance }.by(-minimum_fare)
       end
 
       it 'sets entry station to nil when touching out' do
@@ -84,11 +86,13 @@ describe Oystercard do
       end
 
       it "remembers the exit station when touching out" do
-        expect(subject.exit_station).to eq(station)
+        expect(subject.exit_station).to eq(exit_station)
       end
 
     context "#save_journey" do
-      it { is_expected.to respond_to(:save_journey)}
+      it "saves the journey history when touching out" do
+        expect(subject.journeys).to eq([journey])
+      end
     end
 
     end
